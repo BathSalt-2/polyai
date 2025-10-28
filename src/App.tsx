@@ -10,9 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Brain, Atom, Calculator, Users, MusicNote, Lightbulb, Sparkle, Network, ArrowRight, BookOpen, MagnifyingGlass, Stack, GraduationCap } from '@phosphor-icons/react'
+import { Brain, Atom, Calculator, Users, MusicNote, Lightbulb, Sparkle, Network, ArrowRight, BookOpen, MagnifyingGlass, Stack, GraduationCap, FileText } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { knowledgeBases, searchKnowledgeBase, getKnowledgeEntry, getConnectedEntries, KnowledgeEntry } from '@/lib/knowledgeBase'
+import { PaperAnalyzer } from '@/components/PaperAnalyzer'
 
 const domains = [
   {
@@ -200,7 +201,7 @@ Provide a brief meta-commentary on your own reasoning process.`
         </motion.div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="interface" className="flex items-center gap-2">
               <Brain size={18} />
               Cognitive Interface
@@ -208,6 +209,10 @@ Provide a brief meta-commentary on your own reasoning process.`
             <TabsTrigger value="knowledge" className="flex items-center gap-2">
               <BookOpen size={18} />
               Knowledge Base
+            </TabsTrigger>
+            <TabsTrigger value="papers" className="flex items-center gap-2">
+              <FileText size={18} />
+              Research Papers
             </TabsTrigger>
             <TabsTrigger value="explorer" className="flex items-center gap-2">
               <Stack size={18} />
@@ -522,6 +527,10 @@ Provide a brief meta-commentary on your own reasoning process.`
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="papers" className="space-y-6">
+            <PaperAnalyzer domains={domains} />
           </TabsContent>
 
           <TabsContent value="explorer" className="space-y-6">
