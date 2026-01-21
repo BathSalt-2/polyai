@@ -94,6 +94,13 @@ Academic researchers, graduate students, PhD candidates, and intellectually curi
 **Purpose**: Help researchers understand the structure of research fields and find seminal works
 **Success Criteria**: Graph analysis accurately identifies influential papers and research communities
 
+### 10. Automated Research Question Generation
+**Functionality**: Analyze collections of papers to automatically generate comprehensive research questions across categories
+**Purpose**: Accelerate research ideation and identify research gaps, synthesis opportunities, and future directions
+**Trigger**: User selects 2+ papers from library and clicks "Generate Questions"
+**Progression**: Paper selection → AI analysis → Categorized questions (methodological, theoretical, empirical, cross-domain, future directions) → Gap analysis and synthesis recommendations
+**Success Criteria**: Generated questions are specific, answerable, and reveal non-obvious research opportunities across complexity levels
+
 ## Design Direction
 
 ### Visual Tone & Identity

@@ -205,3 +205,91 @@ export const suggestReadingOrder = (papers: ResearchPaper[]): ResearchPaper[] =>
     return dateA - dateB
   })
 }
+
+export interface ResearchQuestion {
+  id: string
+  question: string
+  category: 'methodological' | 'theoretical' | 'empirical' | 'cross-domain' | 'future-direction'
+  complexity: 'undergraduate' | 'graduate' | 'phd' | 'research'
+  relatedPapers: string[]
+  domains: string[]
+  rationale: string
+  timestamp: number
+}
+
+export interface QuestionGenerationResult {
+  questions: ResearchQuestion[]
+  gapAnalysis: string
+  synthesisOpportunities: string[]
+  methodologicalGaps: string[]
+  crossDomainPotential: string[]
+  futureDirections: string[]
+  timestamp: number
+}
+
+export const identifyResearchGaps = (papers: ResearchPaper[]): {
+  topicalGaps: string[]
+  methodologicalGaps: string[]
+  crossDomainGaps: string[]
+} => {
+  const allKeywords = new Set<string>()
+  const domainCoverage = new Map<string, number>()
+  const methodologyMentions = new Set<string>()
+  
+  papers.forEach(paper => {
+    paper.keywords.forEach(k => allKeywords.add(k))
+    domainCoverage.set(paper.domain, (domainCoverage.get(paper.domain) || 0) + 1)
+    
+    const lowerContent = (paper.content + paper.abstract).toLowerCase()
+    if (lowerContent.includes('qualitative')) methodologyMentions.add('qualitative')
+    if (lowerContent.includes('quantitative')) methodologyMentions.add('quantitative')
+    if (lowerContent.includes('experimental')) methodologyMentions.add('experimental')
+    if (lowerContent.includes('survey')) methodologyMentions.add('survey')
+    if (lowerContent.includes('case study')) methodologyMentions.add('case study')
+  })
+  
+  const topicalGaps: string[] = []
+  const methodologicalGaps: string[] = []
+  const crossDomainGaps: string[] = []
+  
+  if (!methodologyMentions.has('qualitative')) {
+    methodologicalGaps.push('Lack of qualitative research approaches')
+  }
+  if (!methodologyMentions.has('quantitative')) {
+    methodologicalGaps.push('Limited quantitative analysis')
+  }
+  if (!methodologyMentions.has('experimental')) {
+    methodologicalGaps.push('Few experimental validations')
+  }
+  
+  const domains = Array.from(domainCoverage.keys())
+  if (domains.length > 1) {
+    for (let i = 0; i < domains.length; i++) {
+      for (let j = i + 1; j < domains.length; j++) {
+        crossDomainGaps.push(`Integration between ${domains[i]} and ${domains[j]}`)
+      }
+    }
+  }
+  
+  return { topicalGaps, methodologicalGaps, crossDomainGaps }
+}
+
+export const clusterPapersByTheme = (papers: ResearchPaper[]): Map<string, ResearchPaper[]> => {
+  const clusters = new Map<string, ResearchPaper[]>()
+  
+  papers.forEach(paper => {
+    paper.keywords.slice(0, 3).forEach(keyword => {
+      if (!clusters.has(keyword)) {
+        clusters.set(keyword, [])
+      }
+      clusters.get(keyword)?.push(paper)
+    })
+  })
+  
+  return new Map(
+    Array.from(clusters.entries())
+      .filter(([_, papers]) => papers.length >= 2)
+      .sort((a, b) => b[1].length - a[1].length)
+      .slice(0, 5)
+  )
+}
