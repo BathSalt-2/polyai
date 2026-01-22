@@ -74,10 +74,12 @@ Academic researchers, graduate students, PhD candidates, and intellectually curi
 **Purpose**: Provide transparency into AI reasoning and model sophisticated self-awareness
 **Success Criteria**: Reflections offer genuine insights into reasoning processes and limitations
 
-### 6. Research Paper Analysis
-**Functionality**: Upload, parse, and deeply analyze academic research papers with AI-powered insights
-**Purpose**: Enable researchers to quickly understand complex papers and extract key findings
-**Success Criteria**: Analyses demonstrate PhD-level comprehension and identify cross-domain connections
+### 6. Research Paper Analysis with PDF Upload
+**Functionality**: Upload PDF files or manually enter research papers for deep AI-powered analysis with automatic text extraction and structure parsing
+**Purpose**: Enable researchers to quickly understand complex papers, extract key findings, and analyze PDFs directly
+**Trigger**: User uploads PDF file or manually enters paper details
+**Progression**: PDF upload → Text extraction → AI structure parsing → Review/edit → Add to library → Deep analysis on demand
+**Success Criteria**: PDF text extraction works reliably, analyses demonstrate PhD-level comprehension, and identify cross-domain connections
 
 ### 7. Multi-Paper Comparison
 **Functionality**: Compare two or more research papers to identify similarities, differences, and complementary insights
