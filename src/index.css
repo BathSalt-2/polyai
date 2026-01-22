@@ -253,6 +253,32 @@ body {
   .domain-card:active {
     transform: scale(0.98);
   }
+  
+  [role="tablist"] {
+    touch-action: auto;
+  }
+}
+
+/* Swipe gesture feedback */
+.swipe-container {
+  touch-action: pan-y;
+  user-select: none;
+}
+
+@keyframes swipeHint {
+  0%, 100% { transform: translateX(0); opacity: 1; }
+  50% { transform: translateX(10px); opacity: 0.5; }
+}
+
+.swipe-hint {
+  animation: swipeHint 2s ease-in-out infinite;
+}
+
+/* Enhanced tab transition on mobile */
+@media (max-width: 768px) {
+  [role="tabpanel"] {
+    transition: transform 0.2s ease-out;
+  }
 }
 
 /* Improve scrolling on mobile */

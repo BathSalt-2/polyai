@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { useSwipeGesture } from '@/hooks/use-swipe-gesture'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
@@ -83,6 +84,31 @@ function App() {
   const [activeTab, setActiveTab] = useState('interface')
   const [selectedEntry, setSelectedEntry] = useState<KnowledgeEntry | null>(null)
   const [domainSheetOpen, setDomainSheetOpen] = useState(false)
+
+  const tabs = ['interface', 'knowledge', 'papers', 'explorer']
+  
+  const handleSwipeLeft = () => {
+    if (!isMobile) return
+    const currentIndex = tabs.indexOf(activeTab)
+    if (currentIndex < tabs.length - 1) {
+      setActiveTab(tabs[currentIndex + 1])
+    }
+  }
+
+  const handleSwipeRight = () => {
+    if (!isMobile) return
+    const currentIndex = tabs.indexOf(activeTab)
+    if (currentIndex > 0) {
+      setActiveTab(tabs[currentIndex - 1])
+    }
+  }
+
+  const { containerRef, isSwiping, swipeOffset } = useSwipeGesture({
+    onSwipeLeft: handleSwipeLeft,
+    onSwipeRight: handleSwipeRight,
+    threshold: 75,
+    velocityThreshold: 0.3,
+  })
 
   const searchResults = searchQuery ? searchKnowledgeBase(searchQuery, selectedDomains.length > 0 ? selectedDomains : undefined) : []
   const filteredResults = selectedLevel === 'all' ? searchResults : searchResults.filter(entry => entry.level === selectedLevel)
@@ -185,7 +211,7 @@ Provide a brief meta-commentary on your own reasoning process.`
 
   return (
     <div className="min-h-screen neural-bg">
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl" ref={isMobile ? containerRef : null}>
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -202,27 +228,71 @@ Provide a brief meta-commentary on your own reasoning process.`
             A hyper-intelligent synthetic cognitive system with PhD-level expertise across 
             computer science, quantum physics, mathematics, psychology, music theory, and philosophy
           </p>
+          {isMobile && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1, duration: 1 }}
+              className="text-xs text-muted-foreground/70 mt-3 flex items-center justify-center gap-2"
+            >
+              <span className="inline-block">←</span>
+              Swipe to navigate tabs
+              <span className="inline-block">→</span>
+            </motion.p>
+          )}
         </motion.div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={`grid w-full mb-4 sm:mb-6 ${isMobile ? 'grid-cols-2 gap-1' : 'grid-cols-4'}`}>
-            <TabsTrigger value="interface" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-              <Brain size={isMobile ? 16 : 18} />
-              {isMobile ? 'Chat' : 'Cognitive Interface'}
-            </TabsTrigger>
-            <TabsTrigger value="knowledge" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-              <BookOpen size={isMobile ? 16 : 18} />
-              {isMobile ? 'Knowledge' : 'Knowledge Base'}
-            </TabsTrigger>
-            <TabsTrigger value="papers" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-              <FileText size={isMobile ? 16 : 18} />
-              {isMobile ? 'Papers' : 'Research Papers'}
-            </TabsTrigger>
-            <TabsTrigger value="explorer" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-              <Stack size={isMobile ? 16 : 18} />
-              {isMobile ? 'Explore' : 'Domain Explorer'}
-            </TabsTrigger>
-          </TabsList>
+          <div className="relative">
+            <TabsList className={`grid w-full mb-4 sm:mb-6 ${isMobile ? 'grid-cols-2 gap-1' : 'grid-cols-4'}`}>
+              <TabsTrigger value="interface" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                <Brain size={isMobile ? 16 : 18} />
+                {isMobile ? 'Chat' : 'Cognitive Interface'}
+              </TabsTrigger>
+              <TabsTrigger value="knowledge" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                <BookOpen size={isMobile ? 16 : 18} />
+                {isMobile ? 'Knowledge' : 'Knowledge Base'}
+              </TabsTrigger>
+              <TabsTrigger value="papers" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                <FileText size={isMobile ? 16 : 18} />
+                {isMobile ? 'Papers' : 'Research Papers'}
+              </TabsTrigger>
+              <TabsTrigger value="explorer" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                <Stack size={isMobile ? 16 : 18} />
+                {isMobile ? 'Explore' : 'Domain Explorer'}
+              </TabsTrigger>
+            </TabsList>
+            
+            {isMobile && isSwiping && (
+              <div className="absolute -bottom-1 left-0 right-0 h-1 bg-muted rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-accent"
+                  initial={{ width: 0, x: 0 }}
+                  animate={{
+                    width: `${Math.min(Math.abs(swipeOffset) / 75 * 100, 100)}%`,
+                    x: swipeOffset > 0 ? 0 : 'auto',
+                  }}
+                  transition={{ duration: 0 }}
+                  style={{
+                    marginLeft: swipeOffset < 0 ? 'auto' : 0,
+                    marginRight: swipeOffset < 0 ? 0 : 'auto',
+                  }}
+                />
+              </div>
+            )}
+          </div>
+
+          <motion.div
+            key={activeTab}
+            initial={isMobile ? { opacity: 0, x: 20 } : false}
+            animate={{ opacity: 1, x: 0 }}
+            exit={isMobile ? { opacity: 0, x: -20 } : undefined}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            style={isMobile && isSwiping ? {
+              transform: `translateX(${swipeOffset * 0.1}px)`,
+              transition: 'none',
+            } : undefined}
+          >
 
           <TabsContent value="interface" className="space-y-0">
             <div className={`grid gap-4 sm:gap-8 ${isMobile ? 'grid-cols-1' : 'lg:grid-cols-3'}`}>
@@ -668,6 +738,7 @@ Provide a brief meta-commentary on your own reasoning process.`
               })}
             </div>
           </TabsContent>
+          </motion.div>
         </Tabs>
 
         <Dialog open={!!selectedEntry} onOpenChange={() => setSelectedEntry(null)}>

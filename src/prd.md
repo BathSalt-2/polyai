@@ -158,19 +158,21 @@ Academic researchers, graduate students, PhD candidates, and intellectually curi
 - Scroll areas for managing large content lists and paper collections
 - Text areas for paper content input with monospace font for readability
 - Select dropdowns for domain selection and paper comparison
+- Swipe gestures for natural tab navigation on mobile devices
 
 **Component Customization**: Dark theme with sophisticated gradients and subtle animations
 **Component States**: Smooth hover effects, clear selection states, loading indicators with academic theming
 **Icon Selection**: Phosphor icons chosen for clarity and academic appropriateness
 **Component Hierarchy**: Primary actions (engage intelligence) emphasized, secondary actions (browse, search) clearly accessible
 **Spacing System**: Consistent use of Tailwind's spacing scale for visual rhythm
-**Mobile Adaptation**: Responsive tabs, stacked layouts, touch-friendly interaction areas
+**Mobile Adaptation**: Responsive tabs, stacked layouts, touch-friendly interaction areas, horizontal swipe gestures for tab navigation with visual feedback
 
 ### Animations
 
 **Purposeful Meaning**: Subtle animations suggest neural activity and thought processes
 **Hierarchy of Movement**: Key interactions (domain selection, response generation) receive gentle emphasis
 **Contextual Appropriateness**: Academic context calls for refined, purposeful motion rather than flashy effects
+**Mobile Gesture Feedback**: Visual progress indicators during swipe gestures with smooth tab transitions and subtle hint animations
 
 ### Visual Consistency Framework
 
