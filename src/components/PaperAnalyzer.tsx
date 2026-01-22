@@ -27,7 +27,7 @@ export function PaperAnalyzer({ domains }: PaperAnalyzerProps) {
     authors: '',
     abstract: '',
     content: '',
-    domain: ''
+    domain: 'auto-detect'
   })
   
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -52,13 +52,13 @@ export function PaperAnalyzer({ domains }: PaperAnalyzerProps) {
       authors: paperInput.authors.split(',').map(a => a.trim()).filter(Boolean),
       abstract: paperInput.abstract,
       content: paperInput.content,
-      domain: paperInput.domain || (detectedDomains[0] || 'general'),
+      domain: (paperInput.domain && paperInput.domain !== 'auto-detect') ? paperInput.domain : (detectedDomains[0] || 'general'),
       keywords,
       timestamp: Date.now()
     }
 
     setPapers(current => [newPaper, ...(current || [])])
-    setPaperInput({ title: '', authors: '', abstract: '', content: '', domain: '' })
+    setPaperInput({ title: '', authors: '', abstract: '', content: '', domain: 'auto-detect' })
   }
 
   const analyzePaper = async (paper: ResearchPaper) => {
@@ -272,12 +272,12 @@ Structure this as a formal literature review suitable for an academic paper.`
                   value={paperInput.authors}
                   onChange={(e) => setPaperInput(prev => ({ ...prev, authors: e.target.value }))}
                 />
-                <Select value={paperInput.domain} onValueChange={(value) => setPaperInput(prev => ({ ...prev, domain: value }))}>
+                <Select value={paperInput.domain || "auto-detect"} onValueChange={(value) => setPaperInput(prev => ({ ...prev, domain: value === "auto-detect" ? "" : value }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select domain (or auto-detect)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Auto-detect</SelectItem>
+                    <SelectItem value="auto-detect">Auto-detect</SelectItem>
                     {domains.map(d => (
                       <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
                     ))}
