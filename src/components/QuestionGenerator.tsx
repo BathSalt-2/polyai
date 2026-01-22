@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useKV } from '@github/spark/hooks'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -18,6 +19,7 @@ interface QuestionGeneratorProps {
 }
 
 export function QuestionGenerator({ papers, domains }: QuestionGeneratorProps) {
+  const isMobile = useIsMobile()
   const [generatedQuestions, setGeneratedQuestions] = useKV<QuestionGenerationResult[]>('generated-questions', [])
   const [selectedPapers, setSelectedPapers] = useState<string[]>([])
   const [filterCategory, setFilterCategory] = useState<string>('all')

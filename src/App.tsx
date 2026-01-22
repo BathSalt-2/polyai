@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useKV } from '@github/spark/hooks'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
@@ -10,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Brain, Atom, Calculator, Users, MusicNote, Lightbulb, Sparkle, Network, ArrowRight, BookOpen, MagnifyingGlass, Stack, GraduationCap, FileText } from '@phosphor-icons/react'
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
+import { Brain, Atom, Calculator, Users, MusicNote, Lightbulb, Sparkle, Network, ArrowRight, BookOpen, MagnifyingGlass, Stack, GraduationCap, FileText, List, X } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { knowledgeBases, searchKnowledgeBase, getKnowledgeEntry, getConnectedEntries, KnowledgeEntry } from '@/lib/knowledgeBase'
 import { PaperAnalyzer } from '@/components/PaperAnalyzer'
@@ -70,6 +72,7 @@ interface ConversationEntry {
 }
 
 function App() {
+  const isMobile = useIsMobile()
   const [selectedDomains, setSelectedDomains] = useState<string[]>([])
   const [query, setQuery] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
@@ -79,6 +82,7 @@ function App() {
   const [currentResponse, setCurrentResponse] = useState<ConversationEntry | null>(null)
   const [activeTab, setActiveTab] = useState('interface')
   const [selectedEntry, setSelectedEntry] = useState<KnowledgeEntry | null>(null)
+  const [domainSheetOpen, setDomainSheetOpen] = useState(false)
 
   const searchResults = searchQuery ? searchKnowledgeBase(searchQuery, selectedDomains.length > 0 ? selectedDomains : undefined) : []
   const filteredResults = selectedLevel === 'all' ? searchResults : searchResults.filter(entry => entry.level === selectedLevel)
@@ -181,104 +185,107 @@ Provide a brief meta-commentary on your own reasoning process.`
 
   return (
     <div className="min-h-screen neural-bg">
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center mb-12"
+          className="text-center mb-6 sm:mb-12"
         >
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Network size={48} className="text-accent" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <Network size={isMobile ? 32 : 48} className="text-accent" />
+            <h1 className="text-2xl sm:text-4xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
               Polymathic Intelligence
             </h1>
           </div>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-sm sm:text-xl text-muted-foreground max-w-3xl mx-auto px-2">
             A hyper-intelligent synthetic cognitive system with PhD-level expertise across 
             computer science, quantum physics, mathematics, psychology, music theory, and philosophy
           </p>
         </motion.div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
-            <TabsTrigger value="interface" className="flex items-center gap-2">
-              <Brain size={18} />
-              Cognitive Interface
+          <TabsList className={`grid w-full mb-4 sm:mb-6 ${isMobile ? 'grid-cols-2 gap-1' : 'grid-cols-4'}`}>
+            <TabsTrigger value="interface" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Brain size={isMobile ? 16 : 18} />
+              {isMobile ? 'Chat' : 'Cognitive Interface'}
             </TabsTrigger>
-            <TabsTrigger value="knowledge" className="flex items-center gap-2">
-              <BookOpen size={18} />
-              Knowledge Base
+            <TabsTrigger value="knowledge" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <BookOpen size={isMobile ? 16 : 18} />
+              {isMobile ? 'Knowledge' : 'Knowledge Base'}
             </TabsTrigger>
-            <TabsTrigger value="papers" className="flex items-center gap-2">
-              <FileText size={18} />
-              Research Papers
+            <TabsTrigger value="papers" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <FileText size={isMobile ? 16 : 18} />
+              {isMobile ? 'Papers' : 'Research Papers'}
             </TabsTrigger>
-            <TabsTrigger value="explorer" className="flex items-center gap-2">
-              <Stack size={18} />
-              Domain Explorer
+            <TabsTrigger value="explorer" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Stack size={isMobile ? 16 : 18} />
+              {isMobile ? 'Explore' : 'Domain Explorer'}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="interface" className="space-y-0">
-            <div className="grid lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-1 space-y-6">
-                <Card className="domain-card">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Sparkle className="text-accent" />
-                      Knowledge Domains
-                    </CardTitle>
-                    <CardDescription>
-                      Select domains for interdisciplinary analysis
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {domains.map((domain) => {
-                      const Icon = domain.icon
-                      const isSelected = selectedDomains.includes(domain.id)
-                      return (
-                        <motion.div
-                          key={domain.id}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <Card 
-                            className={`cursor-pointer transition-all ${
-                              isSelected 
-                                ? 'border-primary bg-primary/10' 
-                                : 'border-border hover:border-muted-foreground'
-                            }`}
-                            onClick={() => handleDomainToggle(domain.id)}
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex items-start gap-3">
-                                <Icon size={24} className={domain.color} />
-                                <div className="flex-1">
-                                  <h4 className="font-semibold text-sm">{domain.name}</h4>
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    {domain.description}
-                                  </p>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </motion.div>
-                      )
-                    })}
-                  </CardContent>
-                </Card>
-
-                {selectedDomains.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
-                    <Card className="domain-card">
-                      <CardHeader>
-                        <CardTitle className="text-sm">Active Domains</CardTitle>
-                      </CardHeader>
-                      <CardContent>
+            <div className={`grid gap-4 sm:gap-8 ${isMobile ? 'grid-cols-1' : 'lg:grid-cols-3'}`}>
+              {isMobile ? (
+                <Sheet open={domainSheetOpen} onOpenChange={setDomainSheetOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" className="w-full mb-4 justify-between">
+                      <div className="flex items-center gap-2">
+                        <Sparkle className="text-accent" size={18} />
+                        {selectedDomains.length === 0 
+                          ? 'Select Knowledge Domains' 
+                          : `${selectedDomains.length} Domain${selectedDomains.length > 1 ? 's' : ''} Selected`}
+                      </div>
+                      <List size={18} />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="bottom" className="h-[80vh]">
+                    <SheetHeader>
+                      <SheetTitle className="flex items-center gap-2">
+                        <Sparkle className="text-accent" />
+                        Knowledge Domains
+                      </SheetTitle>
+                      <SheetDescription>
+                        Select domains for interdisciplinary analysis
+                      </SheetDescription>
+                    </SheetHeader>
+                    <ScrollArea className="h-[calc(80vh-120px)] mt-4">
+                      <div className="space-y-3 pr-4">
+                        {domains.map((domain) => {
+                          const Icon = domain.icon
+                          const isSelected = selectedDomains.includes(domain.id)
+                          return (
+                            <motion.div
+                              key={domain.id}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              <Card 
+                                className={`cursor-pointer transition-all ${
+                                  isSelected 
+                                    ? 'border-primary bg-primary/10' 
+                                    : 'border-border hover:border-muted-foreground'
+                                }`}
+                                onClick={() => handleDomainToggle(domain.id)}
+                              >
+                                <CardContent className="p-4">
+                                  <div className="flex items-start gap-3">
+                                    <Icon size={24} className={domain.color} />
+                                    <div className="flex-1">
+                                      <h4 className="font-semibold text-sm">{domain.name}</h4>
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        {domain.description}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </motion.div>
+                          )
+                        })}
+                      </div>
+                    </ScrollArea>
+                    {selectedDomains.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-border">
                         <div className="flex flex-wrap gap-2">
                           {selectedDomains.map(domainId => {
                             const domain = domains.find(d => d.id === domainId)
@@ -289,17 +296,90 @@ Provide a brief meta-commentary on your own reasoning process.`
                             )
                           })}
                         </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                )}
-              </div>
+                      </div>
+                    )}
+                  </SheetContent>
+                </Sheet>
+              ) : (
+                <div className="lg:col-span-1 space-y-6">
+                  <Card className="domain-card">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Sparkle className="text-accent" />
+                        Knowledge Domains
+                      </CardTitle>
+                      <CardDescription>
+                        Select domains for interdisciplinary analysis
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {domains.map((domain) => {
+                        const Icon = domain.icon
+                        const isSelected = selectedDomains.includes(domain.id)
+                        return (
+                          <motion.div
+                            key={domain.id}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <Card 
+                              className={`cursor-pointer transition-all ${
+                                isSelected 
+                                  ? 'border-primary bg-primary/10' 
+                                  : 'border-border hover:border-muted-foreground'
+                              }`}
+                              onClick={() => handleDomainToggle(domain.id)}
+                            >
+                              <CardContent className="p-4">
+                                <div className="flex items-start gap-3">
+                                  <Icon size={24} className={domain.color} />
+                                  <div className="flex-1">
+                                    <h4 className="font-semibold text-sm">{domain.name}</h4>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      {domain.description}
+                                    </p>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        )
+                      })}
+                    </CardContent>
+                  </Card>
 
-              <div className="lg:col-span-2 space-y-6">
+                  {selectedDomains.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      <Card className="domain-card">
+                        <CardHeader>
+                          <CardTitle className="text-sm">Active Domains</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedDomains.map(domainId => {
+                              const domain = domains.find(d => d.id === domainId)
+                              return (
+                                <Badge key={domainId} variant="secondary" className="text-xs">
+                                  {domain?.name}
+                                </Badge>
+                              )
+                            })}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  )}
+                </div>
+              )}
+
+              <div className={`space-y-4 sm:space-y-6 ${isMobile ? '' : 'lg:col-span-2'}`}>
                 <Card className="domain-card">
                   <CardHeader>
-                    <CardTitle>Cognitive Interface</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-base sm:text-lg">Cognitive Interface</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">
                       Engage with polymathic intelligence across multiple domains
                     </CardDescription>
                   </CardHeader>
@@ -308,14 +388,14 @@ Provide a brief meta-commentary on your own reasoning process.`
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       placeholder="Ask a complex question that spans multiple domains of knowledge..."
-                      className="min-h-[120px] bg-background/50 border-border"
+                      className="min-h-[100px] sm:min-h-[120px] bg-background/50 border-border text-sm sm:text-base"
                       disabled={isThinking}
                     />
                     <Button 
                       onClick={generateResponse}
                       disabled={!query.trim() || isThinking}
                       className="w-full"
-                      size="lg"
+                      size={isMobile ? 'default' : 'lg'}
                     >
                       {isThinking ? (
                         <div className="flex items-center gap-2">
@@ -324,9 +404,9 @@ Provide a brief meta-commentary on your own reasoning process.`
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
-                          <Brain />
+                          <Brain size={isMobile ? 18 : 20} />
                           Engage Intelligence
-                          <ArrowRight />
+                          <ArrowRight size={isMobile ? 18 : 20} />
                         </div>
                       )}
                     </Button>
@@ -434,19 +514,19 @@ Provide a brief meta-commentary on your own reasoning process.`
             </div>
           </TabsContent>
 
-          <TabsContent value="knowledge" className="space-y-6">
+          <TabsContent value="knowledge" className="space-y-4 sm:space-y-6">
             <Card className="domain-card">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                   <MagnifyingGlass className="text-accent" />
                   Knowledge Database Search
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-xs sm:text-sm">
                   Explore expert-level content across all domains
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex gap-4">
+                <div className={`flex gap-2 sm:gap-4 ${isMobile ? 'flex-col' : ''}`}>
                   <div className="flex-1">
                     <Input
                       placeholder="Search knowledge base..."
@@ -456,7 +536,7 @@ Provide a brief meta-commentary on your own reasoning process.`
                     />
                   </div>
                   <Select value={selectedLevel} onValueChange={setSelectedLevel}>
-                    <SelectTrigger className="w-48">
+                    <SelectTrigger className={isMobile ? 'w-full' : 'w-48'}>
                       <SelectValue placeholder="Filter by level" />
                     </SelectTrigger>
                     <SelectContent>
@@ -471,7 +551,7 @@ Provide a brief meta-commentary on your own reasoning process.`
 
                 {selectedDomains.length > 0 && (
                   <div className="flex flex-wrap gap-2">
-                    <span className="text-sm text-muted-foreground">Filtering by domains:</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground">Filtering by domains:</span>
                     {selectedDomains.map(domainId => {
                       const domain = domains.find(d => d.id === domainId)
                       return (
@@ -488,21 +568,21 @@ Provide a brief meta-commentary on your own reasoning process.`
             {searchQuery && (
               <Card className="domain-card">
                 <CardHeader>
-                  <CardTitle>Search Results ({filteredResults.length})</CardTitle>
+                  <CardTitle className="text-base sm:text-lg">Search Results ({filteredResults.length})</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ScrollArea className="h-96">
-                    <div className="space-y-4">
+                  <ScrollArea className={isMobile ? 'h-[60vh]' : 'h-96'}>
+                    <div className="space-y-3 sm:space-y-4">
                       {filteredResults.map((entry) => (
                         <motion.div
                           key={entry.id}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="knowledge-card p-4 bg-background/30 rounded-lg border border-border hover:border-primary/50 transition-colors cursor-pointer"
+                          className="knowledge-card p-3 sm:p-4 bg-background/30 rounded-lg border border-border hover:border-primary/50 transition-colors cursor-pointer"
                           onClick={() => setSelectedEntry(entry)}
                         >
                           <div className="flex items-start justify-between mb-2">
-                            <h4 className="font-semibold text-foreground">{entry.title}</h4>
+                            <h4 className="font-semibold text-foreground text-sm sm:text-base">{entry.title}</h4>
                             <div className="flex items-center gap-2">
                               {getLevelIcon(entry.level)}
                               <Badge variant={getLevelBadgeVariant(entry.level)} className="text-xs level-indicator">
@@ -510,7 +590,7 @@ Provide a brief meta-commentary on your own reasoning process.`
                               </Badge>
                             </div>
                           </div>
-                          <p className="text-sm text-muted-foreground line-clamp-3 mb-3">
+                          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3 mb-3">
                             {entry.content.substring(0, 200)}...
                           </p>
                           <div className="flex flex-wrap gap-1">
@@ -533,25 +613,25 @@ Provide a brief meta-commentary on your own reasoning process.`
             <PaperAnalyzer domains={domains} />
           </TabsContent>
 
-          <TabsContent value="explorer" className="space-y-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <TabsContent value="explorer" className="space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {Object.entries(knowledgeBases).map(([domainId, domainData]) => {
                 const domain = domains.find(d => d.id === domainId)
                 const Icon = domain?.icon || BookOpen
                 return (
                   <Card key={domainId} className="domain-card">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Icon size={24} className={domain?.color || 'text-foreground'} />
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Icon size={20} className={domain?.color || 'text-foreground'} />
                         {domain?.name}
                       </CardTitle>
-                      <CardDescription>
+                      <CardDescription className="text-xs">
                         {domainData.entries.length} expert articles
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
-                        <h5 className="text-sm font-medium mb-2">Fundamentals</h5>
+                        <h5 className="text-xs sm:text-sm font-medium mb-2">Fundamentals</h5>
                         <div className="flex flex-wrap gap-1">
                           {domainData.fundamentals.slice(0, 3).map(topic => (
                             <Badge key={topic} variant="secondary" className="text-xs">
@@ -561,7 +641,7 @@ Provide a brief meta-commentary on your own reasoning process.`
                         </div>
                       </div>
                       <div>
-                        <h5 className="text-sm font-medium mb-2">Research Frontiers</h5>
+                        <h5 className="text-xs sm:text-sm font-medium mb-2">Research Frontiers</h5>
                         <div className="flex flex-wrap gap-1">
                           {domainData.researchFrontiers.slice(0, 2).map(topic => (
                             <Badge key={topic} variant="destructive" className="text-xs">
@@ -591,15 +671,15 @@ Provide a brief meta-commentary on your own reasoning process.`
         </Tabs>
 
         <Dialog open={!!selectedEntry} onOpenChange={() => setSelectedEntry(null)}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto w-[95vw] sm:w-full">
             {selectedEntry && (
               <>
                 <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
+                  <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
                     {getLevelIcon(selectedEntry.level)}
                     {selectedEntry.title}
                   </DialogTitle>
-                  <DialogDescription>
+                  <DialogDescription className="text-xs sm:text-sm">
                     <Badge variant={getLevelBadgeVariant(selectedEntry.level)} className="mr-2">
                       {selectedEntry.level}
                     </Badge>
@@ -608,14 +688,14 @@ Provide a brief meta-commentary on your own reasoning process.`
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="prose prose-invert max-w-none">
-                    <div className="whitespace-pre-wrap text-foreground leading-relaxed">
+                    <div className="whitespace-pre-wrap text-foreground leading-relaxed text-sm sm:text-base">
                       {selectedEntry.content}
                     </div>
                   </div>
                   
                   {selectedEntry.tags.length > 0 && (
                     <div>
-                      <h5 className="text-sm font-medium mb-2">Tags</h5>
+                      <h5 className="text-xs sm:text-sm font-medium mb-2">Tags</h5>
                       <div className="flex flex-wrap gap-1">
                         {selectedEntry.tags.map(tag => (
                           <Badge key={tag} variant="outline" className="text-xs">
@@ -628,8 +708,8 @@ Provide a brief meta-commentary on your own reasoning process.`
 
                   {selectedEntry.references && selectedEntry.references.length > 0 && (
                     <div>
-                      <h5 className="text-sm font-medium mb-2">References</h5>
-                      <ul className="text-sm text-muted-foreground space-y-1">
+                      <h5 className="text-xs sm:text-sm font-medium mb-2">References</h5>
+                      <ul className="text-xs sm:text-sm text-muted-foreground space-y-1">
                         {selectedEntry.references.map((ref, idx) => (
                           <li key={idx}>• {ref}</li>
                         ))}
@@ -639,8 +719,8 @@ Provide a brief meta-commentary on your own reasoning process.`
 
                   {selectedEntry.connections.length > 0 && (
                     <div>
-                      <h5 className="text-sm font-medium mb-2">Connected Articles</h5>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <h5 className="text-xs sm:text-sm font-medium mb-2">Connected Articles</h5>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {selectedEntry.connections.map(connectionId => {
                           const connectedEntry = getConnectedEntries(selectedEntry.id).find(e => e.id === connectionId)
                           if (!connectedEntry) return null

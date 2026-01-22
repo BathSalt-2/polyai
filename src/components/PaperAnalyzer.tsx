@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useKV } from '@github/spark/hooks'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -19,6 +20,7 @@ interface PaperAnalyzerProps {
 }
 
 export function PaperAnalyzer({ domains }: PaperAnalyzerProps) {
+  const isMobile = useIsMobile()
   const [papers, setPapers] = useKV<ResearchPaper[]>('research-papers', [])
   const [analyses, setAnalyses] = useKV<PaperAnalysis[]>('paper-analyses', [])
   
@@ -224,9 +226,9 @@ Structure this as a formal literature review suitable for an academic paper.`
     : (papers || [])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {(papers || []).length >= 2 && (
-        <div className="flex gap-2 mb-4">
+        <div className={`flex gap-2 mb-4 ${isMobile ? 'flex-col' : ''}`}>
           <Button
             variant={activeView === 'library' ? 'default' : 'outline'}
             onClick={() => setActiveView('library')}
@@ -252,11 +254,11 @@ Structure this as a formal literature review suitable for an academic paper.`
         <>
           <Card className="domain-card">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                 <FileText className="text-accent" />
                 Research Paper Analysis
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-xs sm:text-sm">
                 Add research papers for deep AI-powered analysis and synthesis
               </CardDescription>
             </CardHeader>
@@ -266,11 +268,13 @@ Structure this as a formal literature review suitable for an academic paper.`
                   placeholder="Paper title..."
                   value={paperInput.title}
                   onChange={(e) => setPaperInput(prev => ({ ...prev, title: e.target.value }))}
+                  className="text-sm sm:text-base"
                 />
                 <Input
                   placeholder="Authors (comma-separated)..."
                   value={paperInput.authors}
                   onChange={(e) => setPaperInput(prev => ({ ...prev, authors: e.target.value }))}
+                  className="text-sm sm:text-base"
                 />
                 <Select value={paperInput.domain || "auto-detect"} onValueChange={(value) => setPaperInput(prev => ({ ...prev, domain: value === "auto-detect" ? "" : value }))}>
                   <SelectTrigger>
@@ -287,21 +291,22 @@ Structure this as a formal literature review suitable for an academic paper.`
                   placeholder="Abstract..."
                   value={paperInput.abstract}
                   onChange={(e) => setPaperInput(prev => ({ ...prev, abstract: e.target.value }))}
-                  className="min-h-[100px]"
+                  className="min-h-[80px] sm:min-h-[100px] text-sm sm:text-base"
                 />
                 <Textarea
                   placeholder="Full paper content (paste the entire paper for best analysis)..."
                   value={paperInput.content}
                   onChange={(e) => setPaperInput(prev => ({ ...prev, content: e.target.value }))}
-                  className="min-h-[200px] code-font text-sm"
+                  className="min-h-[150px] sm:min-h-[200px] code-font text-xs sm:text-sm"
                 />
               </div>
               <Button 
                 onClick={addPaper} 
                 disabled={!paperInput.title || !paperInput.abstract}
                 className="w-full"
+                size={isMobile ? 'default' : 'default'}
               >
-                <FileText className="mr-2" />
+                <FileText className="mr-2" size={18} />
                 Add Paper to Library
               </Button>
             </CardContent>
@@ -311,7 +316,7 @@ Structure this as a formal literature review suitable for an academic paper.`
             <>
               <Card className="domain-card">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                     <MagnifyingGlass className="text-accent" />
                     Paper Library ({(papers || []).length})
                   </CardTitle>
@@ -321,10 +326,10 @@ Structure this as a formal literature review suitable for an academic paper.`
                     placeholder="Search papers by title, author, keywords..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="bg-background/50"
+                    className="bg-background/50 text-sm sm:text-base"
                   />
                   
-                  <ScrollArea className="h-96">
+                  <ScrollArea className={isMobile ? 'h-[50vh]' : 'h-96'}>
                     <div className="space-y-3">
                       {filteredPapers.map(paper => (
                         <motion.div
@@ -333,23 +338,23 @@ Structure this as a formal literature review suitable for an academic paper.`
                           animate={{ opacity: 1, y: 0 }}
                         >
                           <Card className="knowledge-card cursor-pointer">
-                            <CardContent className="p-4">
-                              <div className="flex items-start justify-between mb-2">
+                            <CardContent className="p-3 sm:p-4">
+                              <div className="flex items-start justify-between mb-2 gap-2">
                                 <div className="flex-1">
-                                  <h4 className="font-semibold text-foreground mb-1">{paper.title}</h4>
+                                  <h4 className="font-semibold text-foreground mb-1 text-sm sm:text-base">{paper.title}</h4>
                                   <p className="text-xs text-muted-foreground mb-2">
                                     {paper.authors.join(', ')}
                                   </p>
                                 </div>
-                                <Badge variant="secondary" className="text-xs">
+                                <Badge variant="secondary" className="text-xs shrink-0">
                                   {domains.find(d => d.id === paper.domain)?.name || paper.domain}
                                 </Badge>
                               </div>
-                              <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 mb-3">
                                 {paper.abstract}
                               </p>
                               <div className="flex flex-wrap gap-1 mb-3">
-                                {paper.keywords.slice(0, 5).map(keyword => (
+                                {paper.keywords.slice(0, isMobile ? 3 : 5).map(keyword => (
                                   <Badge key={keyword} variant="outline" className="text-xs">
                                     {keyword}
                                   </Badge>
@@ -382,35 +387,35 @@ Structure this as a formal literature review suitable for an academic paper.`
                 </CardContent>
               </Card>
 
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className={`grid gap-4 sm:gap-6 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
                 <Card className="domain-card">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <ArrowsLeftRight className="text-accent" />
+                    <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                      <ArrowsLeftRight className="text-accent" size={18} />
                       Compare Papers
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-xs sm:text-sm">
                       Analyze relationships between two papers
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <Select value={comparePaper1} onValueChange={setComparePaper1}>
-                      <SelectTrigger>
+                      <SelectTrigger className="text-sm">
                         <SelectValue placeholder="Select first paper" />
                       </SelectTrigger>
                       <SelectContent>
                         {(papers || []).map(p => (
-                          <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                          <SelectItem key={p.id} value={p.id} className="text-sm">{p.title}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                     <Select value={comparePaper2} onValueChange={setComparePaper2}>
-                      <SelectTrigger>
+                      <SelectTrigger className="text-sm">
                         <SelectValue placeholder="Select second paper" />
                       </SelectTrigger>
                       <SelectContent>
                         {(papers || []).map(p => (
-                          <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+                          <SelectItem key={p.id} value={p.id} className="text-sm">{p.title}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -418,8 +423,9 @@ Structure this as a formal literature review suitable for an academic paper.`
                       onClick={handleComparison}
                       disabled={!comparePaper1 || !comparePaper2 || comparePaper1 === comparePaper2}
                       className="w-full"
+                      size="sm"
                     >
-                      <ArrowsLeftRight className="mr-2" />
+                      <ArrowsLeftRight className="mr-2" size={16} />
                       Compare Papers
                     </Button>
                   </CardContent>
@@ -427,18 +433,19 @@ Structure this as a formal literature review suitable for an academic paper.`
 
                 <Card className="domain-card">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Network className="text-accent" />
+                    <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
+                      <Network className="text-accent" size={18} />
                       Analysis Tools
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-xs sm:text-sm">
                       Advanced synthesis capabilities
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <Button
                       variant="outline"
-                      className="w-full justify-start"
+                      className="w-full justify-start text-xs sm:text-sm"
+                      size="sm"
                       disabled={(papers || []).length < 2}
                       onClick={async () => {
                         const review = await generateLiteratureReview()
@@ -452,7 +459,8 @@ Structure this as a formal literature review suitable for an academic paper.`
                     </Button>
                     <Button
                       variant="outline"
-                      className="w-full justify-start"
+                      className="w-full justify-start text-xs sm:text-sm"
+                      size="sm"
                       disabled={(papers || []).length < 3}
                       onClick={() => {
                         const graph = buildCitationGraph(papers || [])
@@ -465,7 +473,8 @@ Structure this as a formal literature review suitable for an academic paper.`
                     </Button>
                     <Button
                       variant="outline"
-                      className="w-full justify-start"
+                      className="w-full justify-start text-xs sm:text-sm"
+                      size="sm"
                       disabled={(papers || []).length < 2}
                       onClick={() => {
                         const ordered = suggestReadingOrder(papers || [])
@@ -509,33 +518,33 @@ Structure this as a formal literature review suitable for an academic paper.`
       )}
 
       <Dialog open={!!selectedAnalysis} onOpenChange={() => setSelectedAnalysis(null)}>
-        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto w-[95vw] sm:w-full">
           {selectedAnalysis && selectedPaper && (
             <>
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Sparkle className="text-accent" />
+                <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <Sparkle className="text-accent" size={isMobile ? 18 : 20} />
                   {selectedPaper.title}
                 </DialogTitle>
-                <DialogDescription>
+                <DialogDescription className="text-xs sm:text-sm">
                   PhD-level research paper analysis
                 </DialogDescription>
               </DialogHeader>
               
-              <div className="space-y-6">
-                <div className="bg-secondary/20 rounded-lg p-4 border border-secondary/30">
-                  <h4 className="font-semibold text-sm mb-2 text-secondary">Executive Summary</h4>
-                  <p className="text-sm leading-relaxed">{selectedAnalysis.summary}</p>
+              <div className="space-y-4 sm:space-y-6">
+                <div className="bg-secondary/20 rounded-lg p-3 sm:p-4 border border-secondary/30">
+                  <h4 className="font-semibold text-xs sm:text-sm mb-2 text-secondary">Executive Summary</h4>
+                  <p className="text-xs sm:text-sm leading-relaxed">{selectedAnalysis.summary}</p>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm sm:text-base">
                     <Lightning size={16} className="text-accent" />
                     Key Findings
                   </h4>
                   <ul className="space-y-2">
                     {selectedAnalysis.keyFindings.map((finding, idx) => (
-                      <li key={idx} className="text-sm flex items-start gap-2">
+                      <li key={idx} className="text-xs sm:text-sm flex items-start gap-2">
                         <span className="text-accent mt-1">•</span>
                         <span>{finding}</span>
                       </li>
@@ -546,20 +555,20 @@ Structure this as a formal literature review suitable for an academic paper.`
                 <Separator />
 
                 <div>
-                  <h4 className="font-semibold mb-3">Methodology</h4>
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{selectedAnalysis.methodology}</p>
+                  <h4 className="font-semibold mb-3 text-sm sm:text-base">Methodology</h4>
+                  <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">{selectedAnalysis.methodology}</p>
                 </div>
 
                 <Separator />
 
                 <div>
-                  <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm sm:text-base">
                     <Network size={16} className="text-purple-400" />
                     Cross-Domain Insights
                   </h4>
                   <div className="space-y-2">
                     {selectedAnalysis.crossDomainInsights.map((insight, idx) => (
-                      <div key={idx} className="bg-primary/10 rounded-lg p-3 text-sm border border-primary/20">
+                      <div key={idx} className="bg-primary/10 rounded-lg p-2 sm:p-3 text-xs sm:text-sm border border-primary/20">
                         {insight}
                       </div>
                     ))}
@@ -569,20 +578,20 @@ Structure this as a formal literature review suitable for an academic paper.`
                 <Separator />
 
                 <div>
-                  <h4 className="font-semibold mb-3">Critical Analysis</h4>
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{selectedAnalysis.criticalAnalysis}</p>
+                  <h4 className="font-semibold mb-3 text-sm sm:text-base">Critical Analysis</h4>
+                  <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">{selectedAnalysis.criticalAnalysis}</p>
                 </div>
 
                 <Separator />
 
                 <div>
-                  <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm sm:text-base">
                     <Question size={16} className="text-yellow-400" />
                     Research Questions
                   </h4>
                   <ul className="space-y-2">
                     {selectedAnalysis.questions.map((question, idx) => (
-                      <li key={idx} className="text-sm flex items-start gap-2">
+                      <li key={idx} className="text-xs sm:text-sm flex items-start gap-2">
                         <span className="text-yellow-400 mt-1">?</span>
                         <span>{question}</span>
                       </li>
@@ -591,11 +600,11 @@ Structure this as a formal literature review suitable for an academic paper.`
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">
+                  <Badge variant="secondary" className="text-xs">
                     Technical Depth: {selectedAnalysis.technicalDepth}
                   </Badge>
                   {selectedAnalysis.connections.map(domain => (
-                    <Badge key={domain} variant="outline">
+                    <Badge key={domain} variant="outline" className="text-xs">
                       {domains.find(d => d.id === domain)?.name || domain}
                     </Badge>
                   ))}
@@ -607,39 +616,39 @@ Structure this as a formal literature review suitable for an academic paper.`
       </Dialog>
 
       <Dialog open={!!comparisonResult} onOpenChange={() => setComparisonResult(null)}>
-        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto w-[95vw] sm:w-full">
           {comparisonResult && (
             <>
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <ArrowsLeftRight className="text-accent" />
+                <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <ArrowsLeftRight className="text-accent" size={isMobile ? 18 : 20} />
                   Comparative Analysis
                 </DialogTitle>
-                <DialogDescription>
+                <DialogDescription className="text-xs sm:text-sm">
                   Deep comparison of research papers
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/20">
-                    <h5 className="font-semibold text-sm mb-2 text-blue-400">Paper 1</h5>
-                    <p className="text-sm font-medium">{comparisonResult.paper1.title}</p>
+              <div className="space-y-4 sm:space-y-6">
+                <div className={`grid gap-3 sm:gap-4 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
+                  <div className="bg-blue-500/10 rounded-lg p-3 sm:p-4 border border-blue-500/20">
+                    <h5 className="font-semibold text-xs sm:text-sm mb-2 text-blue-400">Paper 1</h5>
+                    <p className="text-xs sm:text-sm font-medium">{comparisonResult.paper1.title}</p>
                     <p className="text-xs text-muted-foreground">{comparisonResult.paper1.authors.join(', ')}</p>
                   </div>
-                  <div className="bg-purple-500/10 rounded-lg p-4 border border-purple-500/20">
-                    <h5 className="font-semibold text-sm mb-2 text-purple-400">Paper 2</h5>
-                    <p className="text-sm font-medium">{comparisonResult.paper2.title}</p>
+                  <div className="bg-purple-500/10 rounded-lg p-3 sm:p-4 border border-purple-500/20">
+                    <h5 className="font-semibold text-xs sm:text-sm mb-2 text-purple-400">Paper 2</h5>
+                    <p className="text-xs sm:text-sm font-medium">{comparisonResult.paper2.title}</p>
                     <p className="text-xs text-muted-foreground">{comparisonResult.paper2.authors.join(', ')}</p>
                   </div>
                 </div>
 
                 {comparisonResult.similarities.length > 0 && (
                   <div>
-                    <h4 className="font-semibold mb-3">Shared Themes</h4>
+                    <h4 className="font-semibold mb-3 text-sm sm:text-base">Shared Themes</h4>
                     <div className="flex flex-wrap gap-2">
                       {comparisonResult.similarities.map((keyword: string) => (
-                        <Badge key={keyword} variant="secondary">{keyword}</Badge>
+                        <Badge key={keyword} variant="secondary" className="text-xs">{keyword}</Badge>
                       ))}
                     </div>
                   </div>
@@ -648,9 +657,9 @@ Structure this as a formal literature review suitable for an academic paper.`
                 <Separator />
 
                 <div>
-                  <h4 className="font-semibold mb-3">Deep Comparative Analysis</h4>
+                  <h4 className="font-semibold mb-3 text-sm sm:text-base">Deep Comparative Analysis</h4>
                   <div className="prose prose-invert max-w-none">
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{comparisonResult.deepAnalysis}</p>
+                    <p className="text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">{comparisonResult.deepAnalysis}</p>
                   </div>
                 </div>
               </div>

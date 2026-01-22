@@ -63,6 +63,14 @@ body {
   font-family: 'Inter', sans-serif;
   background: radial-gradient(ellipse at center, oklch(0.08 0.03 250) 0%, oklch(0.04 0.02 250) 100%);
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
 }
 
 .neural-bg {
@@ -144,6 +152,16 @@ body {
   box-shadow: 0 10px 25px oklch(0.25 0.15 250 / 0.2);
 }
 
+@media (max-width: 768px) {
+  .knowledge-card:hover {
+    transform: none;
+  }
+  
+  .knowledge-card:active {
+    transform: scale(0.98);
+  }
+}
+
 /* Level indicator animations */
 .level-indicator {
   position: relative;
@@ -214,4 +232,42 @@ body {
   opacity: 0;
   transform: translateY(-10px);
   transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Mobile touch optimizations */
+@media (max-width: 768px) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  input, textarea, select {
+    font-size: 16px;
+  }
+
+  .domain-card:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Improve scrolling on mobile */
+@media (max-width: 768px) {
+  .overflow-auto,
+  .overflow-y-auto,
+  [class*="ScrollArea"] {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+}
+
+/* Better responsive dialog */
+@media (max-width: 640px) {
+  [role="dialog"] {
+    max-height: 90vh !important;
+  }
 }
