@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useKV } from '@github/spark/hooks'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,10 +10,13 @@ import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { FileText, MagnifyingGlass, Graph, Lightning, Sparkle, ArrowsLeftRight, TreeStructure, ListChecks, Question, Network } from '@phosphor-icons/react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { FileText, MagnifyingGlass, Graph, Lightning, Sparkle, ArrowsLeftRight, TreeStructure, ListChecks, Question, Network, UploadSimple, FilePdf, CheckCircle, Warning } from '@phosphor-icons/react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { toast } from 'sonner'
 import { ResearchPaper, PaperAnalysis, analyzePaperStructure, extractKeyTerms, detectDomains, comparePapers, buildCitationGraph, findCentralPapers, suggestReadingOrder } from '@/lib/paperAnalysis'
 import { QuestionGenerator } from '@/components/QuestionGenerator'
+import { processPDFFile, PDFParseResult } from '@/lib/pdfParser'
 
 interface PaperAnalyzerProps {
   domains: Array<{ id: string; name: string; color: string }>
@@ -21,6 +24,7 @@ interface PaperAnalyzerProps {
 
 export function PaperAnalyzer({ domains }: PaperAnalyzerProps) {
   const isMobile = useIsMobile()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [papers, setPapers] = useKV<ResearchPaper[]>('research-papers', [])
   const [analyses, setAnalyses] = useKV<PaperAnalysis[]>('paper-analyses', [])
   
@@ -33,6 +37,8 @@ export function PaperAnalyzer({ domains }: PaperAnalyzerProps) {
   })
   
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [isProcessingPDF, setIsProcessingPDF] = useState(false)
+  const [pdfParseResult, setPdfParseResult] = useState<PDFParseResult | null>(null)
   const [selectedPaper, setSelectedPaper] = useState<ResearchPaper | null>(null)
   const [selectedAnalysis, setSelectedAnalysis] = useState<PaperAnalysis | null>(null)
   const [compareMode, setCompareMode] = useState(false)
@@ -41,6 +47,81 @@ export function PaperAnalyzer({ domains }: PaperAnalyzerProps) {
   const [comparisonResult, setComparisonResult] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeView, setActiveView] = useState<'library' | 'questions'>('library')
+  const [inputMode, setInputMode] = useState<'manual' | 'pdf'>('pdf')
+  const [isDragging, setIsDragging] = useState(false)
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    const files = Array.from(e.dataTransfer.files)
+    const pdfFile = files.find(f => f.name.toLowerCase().endsWith('.pdf'))
+
+    if (pdfFile) {
+      await processPDF(pdfFile)
+    } else {
+      toast.error('Please drop a PDF file')
+    }
+  }
+
+  const processPDF = async (file: File) => {
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      toast.error('Please upload a PDF file')
+      return
+    }
+
+    setIsProcessingPDF(true)
+    toast.info('Processing PDF... This may take a moment')
+
+    try {
+      const result = await processPDFFile(file)
+      setPdfParseResult(result)
+      
+      setPaperInput({
+        title: result.title,
+        authors: result.authors.join(', '),
+        abstract: result.abstract,
+        content: result.content,
+        domain: 'auto-detect'
+      })
+
+      toast.success('PDF processed successfully! Review and edit the extracted information below.')
+    } catch (error) {
+      console.error('Error processing PDF:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to process PDF file')
+    } finally {
+      setIsProcessingPDF(false)
+    }
+  }
+
+  const handlePDFUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    await processPDF(file)
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
 
   const addPaper = () => {
     if (!paperInput.title || !paperInput.abstract) return
@@ -61,6 +142,8 @@ export function PaperAnalyzer({ domains }: PaperAnalyzerProps) {
 
     setPapers(current => [newPaper, ...(current || [])])
     setPaperInput({ title: '', authors: '', abstract: '', content: '', domain: 'auto-detect' })
+    setPdfParseResult(null)
+    toast.success('Paper added to library successfully!')
   }
 
   const analyzePaper = async (paper: ResearchPaper) => {
@@ -259,56 +342,211 @@ Structure this as a formal literature review suitable for an academic paper.`
                 Research Paper Analysis
               </CardTitle>
               <CardDescription className="text-xs sm:text-sm">
-                Add research papers for deep AI-powered analysis and synthesis
+                Upload PDF files or manually enter research papers for deep AI-powered analysis
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4">
-                <Input
-                  placeholder="Paper title..."
-                  value={paperInput.title}
-                  onChange={(e) => setPaperInput(prev => ({ ...prev, title: e.target.value }))}
-                  className="text-sm sm:text-base"
-                />
-                <Input
-                  placeholder="Authors (comma-separated)..."
-                  value={paperInput.authors}
-                  onChange={(e) => setPaperInput(prev => ({ ...prev, authors: e.target.value }))}
-                  className="text-sm sm:text-base"
-                />
-                <Select value={paperInput.domain || "auto-detect"} onValueChange={(value) => setPaperInput(prev => ({ ...prev, domain: value === "auto-detect" ? "" : value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select domain (or auto-detect)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="auto-detect">Auto-detect</SelectItem>
-                    {domains.map(d => (
-                      <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Textarea
-                  placeholder="Abstract..."
-                  value={paperInput.abstract}
-                  onChange={(e) => setPaperInput(prev => ({ ...prev, abstract: e.target.value }))}
-                  className="min-h-[80px] sm:min-h-[100px] text-sm sm:text-base"
-                />
-                <Textarea
-                  placeholder="Full paper content (paste the entire paper for best analysis)..."
-                  value={paperInput.content}
-                  onChange={(e) => setPaperInput(prev => ({ ...prev, content: e.target.value }))}
-                  className="min-h-[150px] sm:min-h-[200px] code-font text-xs sm:text-sm"
-                />
-              </div>
-              <Button 
-                onClick={addPaper} 
-                disabled={!paperInput.title || !paperInput.abstract}
-                className="w-full"
-                size={isMobile ? 'default' : 'default'}
-              >
-                <FileText className="mr-2" size={18} />
-                Add Paper to Library
-              </Button>
+              <Tabs value={inputMode} onValueChange={(v) => setInputMode(v as 'manual' | 'pdf')}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="pdf" className="flex items-center gap-2">
+                    <FilePdf size={16} />
+                    Upload PDF
+                  </TabsTrigger>
+                  <TabsTrigger value="manual" className="flex items-center gap-2">
+                    <FileText size={16} />
+                    Manual Entry
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="pdf" className="space-y-4 mt-4">
+                  <div 
+                    className={`border-2 border-dashed rounded-lg p-6 sm:p-8 text-center transition-colors ${
+                      isDragging 
+                        ? 'border-accent bg-accent/10' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                    onDragEnter={handleDragEnter}
+                    onDragLeave={handleDragLeave}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf"
+                      onChange={handlePDFUpload}
+                      className="hidden"
+                      id="pdf-upload"
+                    />
+                    <label htmlFor="pdf-upload" className="cursor-pointer">
+                      <div className="flex flex-col items-center gap-3">
+                        {isProcessingPDF ? (
+                          <>
+                            <div className="thinking-indicator w-12 h-12 rounded-full"></div>
+                            <p className="text-sm font-medium">Processing PDF...</p>
+                            <p className="text-xs text-muted-foreground">Extracting text and analyzing structure</p>
+                          </>
+                        ) : (
+                          <>
+                            <UploadSimple size={48} className={isDragging ? 'text-accent animate-bounce' : 'text-accent'} />
+                            <div>
+                              <p className="text-sm sm:text-base font-medium mb-1">
+                                {isDragging ? 'Drop PDF here' : 'Click to upload PDF or drag and drop'}
+                              </p>
+                              <p className="text-xs sm:text-sm text-muted-foreground">
+                                Research papers in PDF format
+                              </p>
+                            </div>
+                            {!isDragging && (
+                              <Button 
+                                type="button" 
+                                size={isMobile ? 'sm' : 'default'}
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  fileInputRef.current?.click()
+                                }}
+                              >
+                                <FilePdf className="mr-2" size={18} />
+                                Select PDF File
+                              </Button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </label>
+                  </div>
+
+                  {pdfParseResult && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="bg-accent/10 border border-accent/30 rounded-lg p-4"
+                    >
+                      <div className="flex items-start gap-3 mb-3">
+                        <CheckCircle size={24} className="text-accent shrink-0 mt-1" />
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-sm mb-1">PDF Processed Successfully</h4>
+                          <p className="text-xs text-muted-foreground">
+                            Extraction method: {pdfParseResult.metadata.extractionMethod}
+                          </p>
+                          {pdfParseResult.metadata.pageCount && (
+                            <p className="text-xs text-muted-foreground">
+                              Pages: {pdfParseResult.metadata.pageCount}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Review the extracted information below and make any necessary edits before adding to your library.
+                      </p>
+                    </motion.div>
+                  )}
+
+                  {paperInput.title && (
+                    <div className="space-y-4 border-t border-border pt-4">
+                      <div className="flex items-center gap-2 text-sm font-medium mb-2">
+                        <Warning size={16} className="text-yellow-400" />
+                        Review Extracted Information
+                      </div>
+                      
+                      <Input
+                        placeholder="Paper title..."
+                        value={paperInput.title}
+                        onChange={(e) => setPaperInput(prev => ({ ...prev, title: e.target.value }))}
+                        className="text-sm sm:text-base"
+                      />
+                      <Input
+                        placeholder="Authors (comma-separated)..."
+                        value={paperInput.authors}
+                        onChange={(e) => setPaperInput(prev => ({ ...prev, authors: e.target.value }))}
+                        className="text-sm sm:text-base"
+                      />
+                      <Select value={paperInput.domain || "auto-detect"} onValueChange={(value) => setPaperInput(prev => ({ ...prev, domain: value === "auto-detect" ? "" : value }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select domain (or auto-detect)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="auto-detect">Auto-detect</SelectItem>
+                          {domains.map(d => (
+                            <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Textarea
+                        placeholder="Abstract..."
+                        value={paperInput.abstract}
+                        onChange={(e) => setPaperInput(prev => ({ ...prev, abstract: e.target.value }))}
+                        className="min-h-[80px] sm:min-h-[100px] text-sm sm:text-base"
+                      />
+                      <Textarea
+                        placeholder="Full paper content..."
+                        value={paperInput.content}
+                        onChange={(e) => setPaperInput(prev => ({ ...prev, content: e.target.value }))}
+                        className="min-h-[150px] sm:min-h-[200px] code-font text-xs sm:text-sm"
+                      />
+                      
+                      <Button 
+                        onClick={addPaper} 
+                        disabled={!paperInput.title || !paperInput.abstract}
+                        className="w-full"
+                        size={isMobile ? 'default' : 'default'}
+                      >
+                        <CheckCircle className="mr-2" size={18} />
+                        Add to Library
+                      </Button>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="manual" className="space-y-4 mt-4">
+                  <div className="grid gap-4">
+                    <Input
+                      placeholder="Paper title..."
+                      value={paperInput.title}
+                      onChange={(e) => setPaperInput(prev => ({ ...prev, title: e.target.value }))}
+                      className="text-sm sm:text-base"
+                    />
+                    <Input
+                      placeholder="Authors (comma-separated)..."
+                      value={paperInput.authors}
+                      onChange={(e) => setPaperInput(prev => ({ ...prev, authors: e.target.value }))}
+                      className="text-sm sm:text-base"
+                    />
+                    <Select value={paperInput.domain || "auto-detect"} onValueChange={(value) => setPaperInput(prev => ({ ...prev, domain: value === "auto-detect" ? "" : value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select domain (or auto-detect)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="auto-detect">Auto-detect</SelectItem>
+                        {domains.map(d => (
+                          <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Textarea
+                      placeholder="Abstract..."
+                      value={paperInput.abstract}
+                      onChange={(e) => setPaperInput(prev => ({ ...prev, abstract: e.target.value }))}
+                      className="min-h-[80px] sm:min-h-[100px] text-sm sm:text-base"
+                    />
+                    <Textarea
+                      placeholder="Full paper content (paste the entire paper for best analysis)..."
+                      value={paperInput.content}
+                      onChange={(e) => setPaperInput(prev => ({ ...prev, content: e.target.value }))}
+                      className="min-h-[150px] sm:min-h-[200px] code-font text-xs sm:text-sm"
+                    />
+                  </div>
+                  <Button 
+                    onClick={addPaper} 
+                    disabled={!paperInput.title || !paperInput.abstract}
+                    className="w-full"
+                    size={isMobile ? 'default' : 'default'}
+                  >
+                    <FileText className="mr-2" size={18} />
+                    Add Paper to Library
+                  </Button>
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
 
